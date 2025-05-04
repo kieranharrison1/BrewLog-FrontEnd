@@ -1,0 +1,25 @@
+{
+  "name": "brewlog-frontend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kieranharrison1/BrewLog-FrontEnd.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/kieranharrison1/BrewLog-FrontEnd/issues"
+  },
+  "homepage": "https://github.com/kieranharrison1/BrewLog-FrontEnd#readme",
+  "dependencies": {
+    "@shoelace-style/shoelace": "^2.20.1",
+    "parcel": "^2.14.4"
+  }
+}
