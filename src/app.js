@@ -3,15 +3,31 @@ import { render as renderSignup } from './pages/signup.js';
 import { render as renderGuide } from './pages/guide.js';
 import { render as renderHome } from './pages/home.js';
 import { render as renderProfile } from './pages/profile.js';
+import { validateToken } from './api.js';
 
 export default class App {
     constructor() {
         this.root = document.getElementById('root');
+        this.protectedRoutes = ['#/guide', '#/home', '#/profile'];
     }
 
-    init() {
-        // Example: setup logic like checking login state later
-        this.route();
+    async init() {
+        const token = localStorage.getItem('token');
+
+        const hash = window.location.hash || '#/login';
+        const isProtected = this.protectedRoutes.includes(hash);
+
+        if (isProtected) {
+            try {
+                await validateToken(token);
+                this.route(); // token valid, proceed
+            } catch (err) {
+                localStorage.removeItem('token');
+                window.location.hash = '#/login';
+            }
+        } else {
+            this.route();
+        }
     }
 
     route() {
