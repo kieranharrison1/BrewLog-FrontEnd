@@ -42,6 +42,12 @@ body {
   font-size: 1rem;
 }
 
+.form-field input::placeholder {
+  color: #333;
+  opacity: 50;
+  font-size: 16px;
+}
+
 .auth-btn {
   color: #fff;
   cursor: pointer;
@@ -49,8 +55,8 @@ body {
   border: none;
   border-radius: 8px;
   margin-top: 1.5rem;
-  padding: .8rem 2rem;
-  font-size: 1rem;
+  padding: 1rem 2.5rem;
+  font-size: 1.1rem;
 }
 
 .auth-btn:hover {
@@ -86,9 +92,97 @@ body {
     font-size: 1.1rem;
   }
 
-  .auth-btn {
-    padding: 1rem 2.5rem;
-    font-size: 1.1rem;
+  .dashboard-container {
+    color: #000;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  .dashboard-header {
+    text-align: center;
+    background-color: #ff7a00;
+    padding: 1rem;
+  }
+
+  .dashboard-header .balance-display {
+    color: #fff;
+    background-color: #000;
+    border: 4px solid red;
+    border-radius: 12px;
+    margin-top: 1rem;
+    padding: .5rem 1rem;
+    font-size: 2rem;
+    font-weight: bold;
+    display: inline-block;
+  }
+
+  .dashboard-header .balance-display .balance-label {
+    color: red;
+    margin-top: .3rem;
+    font-size: .8rem;
+    display: block;
+  }
+
+  .dashboard-cards {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1.5rem;
+    margin: 2rem 0;
+    display: flex;
+  }
+
+  .dashboard-cards .card {
+    color: #fff;
+    text-align: center;
+    background: #000;
+    border: 3px solid #ff7a00;
+    border-radius: 12px;
+    width: 250px;
+    padding: 1rem;
+  }
+
+  .dashboard-cards .card h3 {
+    margin-bottom: 1rem;
+    font-weight: bold;
+  }
+
+  .dashboard-cards .card img {
+    width: 100px;
+    height: auto;
+    margin: 1rem 0;
+  }
+
+  .dashboard-cards .card .card-btn {
+    cursor: pointer;
+    background-color: #ff7a00;
+    border: none;
+    border-radius: 6px;
+    padding: .5rem 1rem;
+    font-size: 1.2rem;
+  }
+
+  .modal sl-button {
+    margin-top: 1.5rem;
+  }
+
+  .history-table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+
+  .history-table th, .history-table td {
+    border: 1px solid #ccc;
+    padding: .6rem;
+  }
+
+  .history-table thead {
+    color: #000;
+    background: #ff7a00;
+  }
+
+  .history-table tbody {
+    background: #fff8f0;
   }
 }
 /*# sourceMappingURL=BrewLog-FrontEnd.b8d1660c.css.map */

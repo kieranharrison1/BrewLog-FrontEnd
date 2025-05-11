@@ -1,10 +1,10 @@
-import { loginUser } from '../api.js';
+import {loginUser} from '../api.js';
 
 export function render(root) {
     root.innerHTML = `
 
-    <div class="login-container">
-    <img src="/BrewLog.827a91fe.png" alt="BrewLog Logo" class="brand-logo" />
+    <div class="auth-container">
+    <img src="BrewLog.87fd6b7e.png" alt="BrewLog Logo" class="brand-logo" />
     <div class="form-field">
           <label for="email">Username:</label>
           <input type="email" id="email" placeholder="Enter your email" />
@@ -28,10 +28,10 @@ export function render(root) {
         const errorDiv = document.getElementById('loginError');
 
         try {
-            const { token, isFirstLogin } = await loginUser(email, password);
+            const {token, isFirstLogin} = await loginUser(email, password);
             localStorage.setItem('token', token);
 
-            // Example: track first login
+            // Track first login
             if (isFirstLogin) {
                 window.location.hash = '#/guide';
             } else {
