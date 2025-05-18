@@ -769,9 +769,14 @@ function render(root) {
 },{"../api.js":"38UJz","@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT"}],"38UJz":[function(require,module,exports,__globalThis) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "API_BASE", ()=>API_BASE);
 parcelHelpers.export(exports, "loginUser", ()=>loginUser);
 parcelHelpers.export(exports, "signupUser", ()=>signupUser);
 parcelHelpers.export(exports, "validateToken", ()=>validateToken);
+parcelHelpers.export(exports, "logOrder", ()=>logOrder);
+parcelHelpers.export(exports, "recordPayment", ()=>recordPayment);
+parcelHelpers.export(exports, "fetchOrderHistory", ()=>fetchOrderHistory);
+var _authJs = require("./auth.js");
 const API_BASE = 'https://brewlog-c3c352ffaada.herokuapp.com';
 async function loginUser(email, password) {
     const res = await fetch(`${API_BASE}/auth/signin`, {
@@ -808,8 +813,51 @@ async function validateToken(token) {
     if (!res.ok) throw new Error('Token invalid');
     return await res.json(); // Optional: could return user info or role
 }
+async function logOrder(quantity) {
+    const userId = (0, _authJs.getUserIdFromToken)();
+    const res = await fetch(`${API_BASE}/orders`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            ...(0, _authJs.getAuthHeader)()
+        },
+        body: JSON.stringify({
+            userId,
+            quantity,
+            date: new Date()
+        })
+    });
+    if (!res.ok) throw new Error('Order failed');
+    return await res.json();
+}
+async function recordPayment(amount, date) {
+    const userId = (0, _authJs.getUserIdFromToken)();
+    const res = await fetch(`${API_BASE}/payments`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            ...(0, _authJs.getAuthHeader)()
+        },
+        body: JSON.stringify({
+            userId,
+            amount,
+            date: new Date(date)
+        })
+    });
+    if (!res.ok) throw new Error('Payment failed');
+    return await res.json();
+}
+async function fetchOrderHistory() {
+    const userId = (0, _authJs.getUserIdFromToken)();
+    const res = await fetch(`${API_BASE}/orders/user/${userId}`, {
+        method: 'GET',
+        headers: (0, _authJs.getAuthHeader)()
+    });
+    if (!res.ok) throw new Error('Failed to fetch order history');
+    return await res.json();
+}
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT"}],"jnFvT":[function(require,module,exports,__globalThis) {
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT","./auth.js":"4f9sv"}],"jnFvT":[function(require,module,exports,__globalThis) {
 exports.interopDefault = function(a) {
     return a && a.__esModule ? a : {
         default: a
@@ -839,7 +887,30 @@ exports.export = function(dest, destName, get) {
     });
 };
 
-},{}],"gdmlx":[function(require,module,exports,__globalThis) {
+},{}],"4f9sv":[function(require,module,exports,__globalThis) {
+var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
+parcelHelpers.defineInteropFlag(exports);
+parcelHelpers.export(exports, "getUserIdFromToken", ()=>getUserIdFromToken);
+parcelHelpers.export(exports, "getAuthHeader", ()=>getAuthHeader);
+function getUserIdFromToken() {
+    const token = localStorage.getItem('token');
+    if (!token) return null;
+    try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        return payload.id;
+    } catch (err) {
+        console.error('Invalid token:', err);
+        return null;
+    }
+}
+function getAuthHeader() {
+    const token = localStorage.getItem('token');
+    return token ? {
+        'Authorization': `Bearer ${token}`
+    } : {};
+}
+
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT"}],"gdmlx":[function(require,module,exports,__globalThis) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "render", ()=>render);
@@ -939,33 +1010,67 @@ function render(root) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
 parcelHelpers.defineInteropFlag(exports);
 parcelHelpers.export(exports, "render", ()=>render);
+var _apiJs = require("../api.js");
+var _authJs = require("../auth.js");
 function render(root) {
     root.innerHTML = `
-    <div class="dashboard-header">
-      <img src="BrewLog.87fd6b7e.png" alt="BrewLog Logo" class="brand-logo" />
-      <h2>DASHBOARD</h2>
-      <div class="balance-display">-$22.00 <span class="balance-label">Current Balance</span></div>
+  <!-- NAVBAR -->
+    <nav class="navbar">
+      <div class="navbar-left">
+        <img src="BrewLog.87fd6b7e.png" alt="BrewLog Logo" class="brand-logo" />
+      </div>
+      <h1 class="navbar-title">DASHBOARD</h1>
+      <button class="hamburger" id="menuToggle" aria-label="Menu">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+    </nav>
+    
+    <!-- MENU PANEL -->
+    <div id="mobileMenu" class="mobile-menu hidden">
+      <div class="menu-header">
+        <img src="BrewLog.87fd6b7e.png" alt="Logo" class="menu-logo" />
+        <h2>MENU</h2>
+        <button class="menu-close" id="menuClose">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+    
+      <div class="menu-links">
+        <a href="#/home" class="menu-link">Dashboard</a>
+        <a href="#/profile" class="menu-link">Profile</a>
+        <a href="#/admin" class="menu-link">Admin Dashboard</a>
+        <a href="#/logout" class="menu-link">Logout</a>
+      </div>
     </div>
 
-    <div class="dashboard-cards">
+    <div id="pageContent">
+      <div class="dashboard-header">
+        <div class="balance-display" id="balanceDisplay">
+          <span id="balanceAmount"></span>
+          <span class="balance-label">CURRENT BALANCE</span>
+        </div>
+      </div>
+    
+      <div class="dashboard-cards">
       <div class="card" id="logOrderCard">
         <h3>LOG AN ORDER</h3>
-        <img src="/src/assets/order-icon.svg" alt="Order Icon">
+        <i class="fa-solid fa-mug-hot card-icon"></i>
         <button class="card-btn">\u{27A4}</button>
       </div>
 
       <div class="card" id="recordPaymentCard">
         <h3>RECORD PAYMENT</h3>
-        <img src="/src/assets/payment-icon.svg" alt="Payment Icon">
+        <i class="fa-solid fa-credit-card card-icon"></i>
         <button class="card-btn">\u{27A4}</button>
       </div>
 
       <div class="card" id="viewHistoryCard">
         <h3>YOUR ORDER HISTORY</h3>
-        <img src="/src/assets/history-icon.svg" alt="History Icon">
+        <i class="fa-solid fa-table-list card-icon"></i>
         <button class="card-btn">\u{27A4}</button>
       </div>
-    </div>
+  </div>
+          </div>
 
     <!-- Modals -->
     <sl-dialog label="Log Order" class="modal" id="orderModal">
@@ -975,6 +1080,9 @@ function render(root) {
           <select name="cups" id="cupsSelect">
             <option value="1">1</option>
             <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
           </select>
         </label>
         <sl-button type="submit" variant="primary">SUBMIT</sl-button>
@@ -995,31 +1103,141 @@ function render(root) {
     </sl-dialog>
 
     <sl-dialog label="Order History" class="modal" id="historyModal">
-      <div class="history-summary">Total No. Cups: 16</div>
+      <div class="history-summary">Total No. Cups: 0</div>
       <table class="history-table">
         <thead>
           <tr><th>Date</th><th>Quantity</th><th>Cost</th></tr>
         </thead>
         <tbody>
-          <tr><td>01/04/2025</td><td>1</td><td>$1.00</td></tr>
-          <tr><td>03/04/2025</td><td>2</td><td>$2.00</td></tr>
-          <tr><td>05/04/2025</td><td>1</td><td>$1.00</td></tr>
         </tbody>
       </table>
     </sl-dialog>
   `;
-    document.getElementById('logOrderCard').addEventListener('click', ()=>{
+    const menu = document.getElementById('mobileMenu');
+    const openBtn = document.getElementById('menuToggle');
+    const closeBtn = document.getElementById('menuClose');
+    openBtn.addEventListener('click', ()=>{
+        menu.classList.remove('hidden');
+    });
+    closeBtn.addEventListener('click', ()=>{
+        menu.classList.add('hidden');
+    });
+    document.querySelectorAll('.menu-link').forEach((link)=>{
+        link.addEventListener('click', ()=>{
+            menu.classList.add('hidden');
+        });
+    });
+    const pageContent = document.getElementById('pageContent');
+    [
+        'orderModal',
+        'paymentModal',
+        'historyModal'
+    ].forEach((id)=>{
+        const modal = document.getElementById(id);
+        modal.addEventListener('sl-show', ()=>{
+            pageContent.classList.add('blurred');
+        });
+        modal.addEventListener('sl-hide', ()=>{
+            pageContent.classList.remove('blurred');
+        });
+    });
+    // Attach modal triggers
+    document.getElementById('logOrderCard')?.addEventListener('click', ()=>{
         document.getElementById('orderModal').show();
     });
-    document.getElementById('recordPaymentCard').addEventListener('click', ()=>{
+    document.getElementById('recordPaymentCard')?.addEventListener('click', ()=>{
         document.getElementById('paymentModal').show();
     });
-    document.getElementById('viewHistoryCard').addEventListener('click', ()=>{
-        document.getElementById('historyModal').show();
+    document.getElementById('logOrderForm').addEventListener('submit', async (e)=>{
+        e.preventDefault();
+        const cups = document.getElementById('cupsSelect').value;
+        try {
+            await (0, _apiJs.logOrder)(Number(cups));
+            document.getElementById('orderModal').hide();
+            await updateBalanceDisplay();
+        } catch (err) {
+            console.error(err);
+        }
     });
+    document.getElementById('recordPaymentForm').addEventListener('submit', async (e)=>{
+        e.preventDefault();
+        const amount = parseFloat(document.getElementById('paymentAmount').value);
+        const date = document.getElementById('paymentDate').value;
+        try {
+            await (0, _apiJs.recordPayment)(amount, date);
+            document.getElementById('paymentModal').hide();
+            await updateBalanceDisplay();
+        } catch (err) {
+            console.error(err);
+        }
+    });
+    document.getElementById('viewHistoryCard').addEventListener('click', async ()=>{
+        try {
+            const orders = await (0, _apiJs.fetchOrderHistory)();
+            const tableBody = document.querySelector('.history-table tbody');
+            const summary = document.querySelector('.history-summary');
+            tableBody.innerHTML = '';
+            let totalCups = 0;
+            orders.forEach((order)=>{
+                const rawDate = new Date(order.date);
+                const date = `${String(rawDate.getDate()).padStart(2, '0')}/${String(rawDate.getMonth() + 1).padStart(2, '0')}/${rawDate.getFullYear()}`;
+                const quantity = order.quantity;
+                const cost = `$${(quantity * 1).toFixed(2)}`;
+                tableBody.innerHTML += `
+        <tr>
+          <td>${date}</td>
+          <td>${quantity}</td>
+          <td>${cost}</td>
+        </tr>
+      `;
+                totalCups += quantity;
+            });
+            summary.textContent = `Total No. Cups: ${totalCups}`;
+            document.getElementById('historyModal').show();
+        } catch (err) {
+            console.error(err);
+        }
+    });
+    async function updateBalanceDisplay() {
+        try {
+            const userId = (0, _authJs.getUserIdFromToken)();
+            const authHeaders = {
+                headers: (0, _authJs.getAuthHeader)()
+            };
+            const [ordersRes, paymentsRes] = await Promise.all([
+                fetch(`${(0, _apiJs.API_BASE)}/orders/user/${userId}`, authHeaders),
+                fetch(`${(0, _apiJs.API_BASE)}/payments/user/${userId}`, authHeaders)
+            ]);
+            const orders = await ordersRes.json();
+            const payments = await paymentsRes.json();
+            // 1. Calculate total order cost ($1 per cup)
+            const orderTotal = orders.reduce((sum, order)=>sum + order.quantity * 1, 0);
+            // 2. Sum of approved payments
+            const approvedPayments = payments.filter((p)=>p.confirmed);
+            const paymentTotal = approvedPayments.reduce((sum, payment)=>sum + payment.amount, 0);
+            // 3. Calculate final balance
+            const balance = orderTotal - paymentTotal;
+            const formattedBalance = balance < 0 ? `-$${Math.abs(balance).toFixed(2)}` : `$${balance.toFixed(2)}`;
+            // 4. Update UI
+            const balanceAmount = document.getElementById('balanceAmount');
+            const balanceDisplay = document.getElementById('balanceDisplay');
+            if (balanceAmount && balanceDisplay) {
+                balanceAmount.textContent = formattedBalance;
+                if (balance > 0) balanceDisplay.style.color = '#ff3c54'; // debt
+                else if (balance < 0) balanceDisplay.style.color = '#00cc66'; // credit
+                else balanceDisplay.style.color = 'white'; // neutral
+            }
+        } catch (err) {
+            console.error('Failed to fetch balance:', err);
+        }
+    }
+    // Safe async call at the end of render
+    (async ()=>{
+        await updateBalanceDisplay();
+    })();
 }
 
-},{"@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT"}],"9zjqL":[function(require,module,exports,__globalThis) {
+},{"@parcel/transformer-js/src/esmodule-helpers.js":"jnFvT","../api.js":"38UJz","../auth.js":"4f9sv"}],"9zjqL":[function(require,module,exports,__globalThis) {
 
 },{}],"bNZ7U":[function(require,module,exports,__globalThis) {
 var parcelHelpers = require("@parcel/transformer-js/src/esmodule-helpers.js");
